@@ -80,11 +80,9 @@ function salamWaktu(){
   return h < 10 ? 'Selamat pagi' : h < 15 ? 'Selamat siang' : 'Selamat sore';
 }
 function pesanFinal(d){
-  let m = d.msg;
-  const nm = ($('#myname') && $('#myname').value.trim()) || myName;
-  if (nm) m = m.replace('[NAMA ANDA]', nm);
-  m = m.replace(/^Assalamu'alaikum/, salamWaktu());
-  return m;
+  const nm = (($('#myname') && $('#myname').value.trim()) || myName).trim();
+  if (!nm) return null;   // paksa isi nama dulu
+  return d.msg.replace('[NAMA ANDA]', nm).replace(/^Assalamu'alaikum/, salamWaktu());
 }
 function renderNav(){
   const tims = ['SEMUA','TIM 1','TIM 2','TIM 3','TIM 4','TIM 5','TIM 6','TIM 7','TIM 8'];
@@ -100,16 +98,17 @@ function render(){
     (!q || (d.nama+d.kec).toLowerCase().includes(q)));
   $('#cards').innerHTML = list.map(d=>{
     const isDone = done.has(String(d.no));
-    const pre = 'https://wa.me/' + d.wa + '?text=' + encodeURIComponent(pesanFinal(d));
+    const m = pesanFinal(d) || d.msg;
+    const pre = 'https://wa.me/' + d.wa + '?text=' + encodeURIComponent(m);
     return `<div class="card ${isDone?'done':''}" id="c${d.no}">
       <div class="card-top">
-        <div><h3>${d.no}. ${esc(d.nama)}</h3><span class="kec">Kec. ${esc(d.kec)} &bull; TIM ${d.tim}</span></div>
+        <div><h3>${d.no}. ${esc(d.nama)}</h3><span class="kec">Kec. ${esc(d.kec)} &bull; TIM ${d.tim} &bull; ${esc(d.sesi||'')}</span></div>
         <a class="wa-link" href="${pre}" target="_blank" rel="noopener">${d.wa}</a>
       </div>
-      <div class="msg">${esc(pesanFinal(d))}</div>
+      <div class="msg">${esc(m)}</div>
       <div class="actions">
         <button class="btn" onclick="copyMsg(${d.no},this)">Salin Pesan</button>
-        <a class="btn btn-primary" href="${pre}" target="_blank" rel="noopener">Buka WhatsApp (pesan terisi)</a>
+        <a class="btn btn-primary" href="${pre}" target="_blank" rel="noopener" onclick="return cekNama(event)">Buka WhatsApp</a>
         <a class="btn" href="Surat%20Undangan%20Peserta%20Sosialisasi%20RAD-PPM%2015%20%26%2017%20Sep%202026.pdf" download>Unduh PDF</a>
         <button class="btn ${isDone?'btn-done':''}" onclick="toggleDone(${d.no})">${isDone?'\u2713 Selesai':'Tandai Selesai'}</button>
       </div>
@@ -117,9 +116,27 @@ function render(){
   }).join('') || '<p style="color:var(--muted)">Tidak ada hasil.</p>';
   updateProg();
 }
+function cekNama(e){
+  const nm = (($('#myname') && $('#myname').value.trim()) || '').trim();
+  if (!nm){
+    e.preventDefault();
+    alert('Isi dulu nama Anda di kolom atas (wajib), lalu klik Buka WhatsApp lagi.');
+    $('#myname').focus();
+    $('#myname').style.borderColor = '#c0392b';
+    return false;
+  }
+  localStorage.setItem('wa_myname', nm);
+  return true;
+}
 function copyMsg(no, b){
   const d = DATA.find(x=>x.no===no);
-  navigator.clipboard.writeText(pesanFinal(d)).then(()=>{
+  const m = pesanFinal(d);
+  if (!m){
+    alert('Isi dulu nama Anda di kolom atas (wajib), lalu salin lagi.');
+    $('#myname').focus();
+    return;
+  }
+  navigator.clipboard.writeText(m).then(()=>{
     const old = b.textContent;
     b.textContent = 'Tersalin \u2713'; setTimeout(()=>b.textContent=old,1500);
   });
