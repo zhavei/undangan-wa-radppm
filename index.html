@@ -59,6 +59,7 @@ footer{max-width:1200px;margin:0 auto;padding:10px 16px 24px;font-size:11px;colo
 <nav id="nav"><h2>Kecamatan</h2></nav>
 <main>
   <div class="toolbar">
+    <input id="myname" type="text" placeholder="Tulis nama Anda di sini (wajib diisi sekali)" style="max-width:280px;flex:0 1 auto;font-weight:600">
     <input id="q" type="search" placeholder="Cari nama perusahaan / kecamatan...">
     <span class="progress-chip" id="prog"></span>
   </div>
@@ -81,7 +82,8 @@ function salamWaktu(){
 }
 function pesanFinal(d){
   let m = d.msg;
-  if (myName) m = m.replace('[NAMA ANDA]', myName);
+  const nm = ($('#myname') && $('#myname').value.trim()) || myName;
+  if (nm) m = m.replace('[NAMA ANDA]', nm);
   m = m.replace(/^Assalamu'alaikum/, salamWaktu());
   return m;
 }
@@ -132,10 +134,23 @@ function updateProg(){
   $('#prog').textContent = `${done.size}/${DATA.length} terkirim`;
 }
 $('#q').oninput = e => {q = e.target.value.toLowerCase(); render();};
-(function(){
-  let nm = localStorage.getItem('wa_myname');
-  if(nm === null){ nm = prompt('Siapa nama Anda? (dipakai pada kalimat "Saya ..." di pesan; kosongkan bila tidak ingin diisi)') || ''; localStorage.setItem('wa_myname', nm); }
-})();
+// nama: dibaca dari ?nama=... di link (persisten, tidak hilang), lalu localStorage, lalu field
+const params = new URLSearchParams(location.search);
+const urlName = (params.get('nama') || '').trim();
+const stored = localStorage.getItem('wa_myname') || '';
+const initial = urlName || stored;
+$('#myname').value = initial;
+$('#myname').addEventListener('input', e => {
+  localStorage.setItem('wa_myname', e.target.value.trim());
+  render();
+});
+if (urlName && urlName !== stored) localStorage.setItem('wa_myname', urlName);
+const myName2 = initial;
+if (!initial) {
+  $('#myname').style.borderColor = 'var(--accent)';
+  $('#myname').style.background = '#fffbe6';
+}
+var myName = myName2;
 renderNav(); render();
 </script>
 </body>
