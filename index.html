@@ -74,7 +74,6 @@ const done = new Set(JSON.parse(localStorage.getItem('wa_done')||'[]'));
 let filterTim = 'SEMUA', q = '';
 const $ = s => document.querySelector(s);
 const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;');
-const myName = localStorage.getItem('wa_myname') || '';
 
 function salamWaktu(){
   const h = new Date().getHours();
@@ -145,12 +144,7 @@ $('#myname').addEventListener('input', e => {
   render();
 });
 if (urlName && urlName !== stored) localStorage.setItem('wa_myname', urlName);
-const myName2 = initial;
-if (!initial) {
-  $('#myname').style.borderColor = 'var(--accent)';
-  $('#myname').style.background = '#fffbe6';
-}
-var myName = myName2;
+var myName = initial;
 renderNav(); render();
 </script>
 </body>
